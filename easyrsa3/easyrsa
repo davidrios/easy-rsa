@@ -1325,6 +1325,9 @@ Failed to perform update-db: see above for related openssl errors."
 display_dn() {
 	format="$1" path="$2"
 	print "$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -subject -nameopt multiline)"
+	print ""
+	subjectaltname_line=$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -text | grep -n 'Subject Alternative Name' | cut -d':' -f1)
+	print "$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -text | tail -n+${subjectaltname_line} | head -n2 | sed 's/^            //')"
 } # => display_dn()
 
 # generate default SAN from req/X509, passed by full pathname
