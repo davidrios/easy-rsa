@@ -1321,13 +1321,25 @@ Failed to perform update-db: see above for related openssl errors."
 	return 0
 } # => update_db()
 
+display_san() {
+	format="$1" path="$2"
+	subjectaltname_line=$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -text | grep -n 'X509v3 Subject Alternative Name:' | cut -d':' -f1)
+	if [ -n "$subjectaltname_line" ]; then
+		print "$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -text | tail -n+$((subjectaltname_line+1)) | head -n1 | sed 's/^\s*//')"
+	fi
+}
+
 # display cert DN info on a req/X509, passed by full pathname
 display_dn() {
 	format="$1" path="$2"
 	print "$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -subject -nameopt multiline)"
-	print ""
-	subjectaltname_line=$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -text | grep -n 'Subject Alternative Name' | cut -d':' -f1)
-	print "$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -text | tail -n+${subjectaltname_line} | head -n2 | sed 's/^            //')"
+	san=$(display_san "$1" "$2")
+	if [ -n "$san" ]; then
+		print ""
+		print "X509v3 Subject Alternative Name:"
+		print "    $san"
+	fi
+
 } # => display_dn()
 
 # generate default SAN from req/X509, passed by full pathname
