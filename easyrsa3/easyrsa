@@ -1323,9 +1323,18 @@ Failed to perform update-db: see above for related openssl errors."
 
 display_san() {
 	format="$1" path="$2"
-	subjectaltname_line=$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -text | grep -n 'X509v3 Subject Alternative Name:' | cut -d':' -f1)
-	if [ -n "$subjectaltname_line" ]; then
-		print "$("$EASYRSA_OPENSSL" "$format" -in "$path" -noout -text | tail -n+$((subjectaltname_line+1)) | head -n1 | sed 's/^\s*//')"
+
+	echo "$EASYRSA_EXTRA_EXTS" | grep -q subjectAltName
+
+	if [ $? -eq 0 ]; then
+		print "$(echo "$EASYRSA_EXTRA_EXTS" | grep subjectAltName | sed 's/^\s*subjectAltName\s*=\s*//')"
+	else
+		san=$(
+			"$EASYRSA_OPENSSL" "$format" -in "$path" -noout -text |
+			sed -n "/X509v3 Subject Alternative Name:/{n;s/ //g;p;}"
+			)
+
+		[ -n "$san" ] && print "$san"
 	fi
 }
 
