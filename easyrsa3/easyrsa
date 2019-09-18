@@ -788,9 +788,18 @@ $(display_dn req "$req_in")
 		# add one to the extensions file
 		if [ "$crt_type" = 'server' ];
 		then
-			echo "$EASYRSA_EXTRA_EXTS" |
-				grep -q subjectAltName ||
-				default_server_san "$req_in"
+			echo "$EASYRSA_EXTRA_EXTS" | grep -q subjectAltName
+			if [ $? -ne 0 ];
+			then
+				san=$(display_san req "$req_in")
+
+				if [ -n "$san" ];
+				then
+					print "subjectAltName = $san"
+				else
+					default_server_san "$req_in"
+				fi
+			fi
 		fi
 
 		# Add any advanced extensions supplied by env-var:
